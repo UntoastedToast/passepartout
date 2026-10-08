@@ -1,0 +1,46 @@
+[package]
+name = "passepartout"
+version = "0.1.0"
+edition = "2024"
+description = "Put images on a canvas with padding, sized for Instagram"
+license = "Apache-2.0"
+
+[dependencies]
+adw = { version = "0.9.2", package = "libadwaita", features = ["v1_4"] }
+async-channel = "2.5.0"
+gtk = { version = "0.11.5", package = "gtk4", features = ["v4_14"] }
+image = { version = "0.25.10", default-features = false, features = ["jpeg", "png", "webp", "gif", "bmp", "tiff"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+walkdir = "2.5.0"
+
+[dev-dependencies]
+tempfile = "3.27.0"
+
+[profile.release]
+lto = true
+strip = true
+
+# Image codecs are far too slow unoptimized; keep our own code debuggable.
+[profile.dev.package."*"]
+opt-level = 3
+
+[package.metadata.deb]
+section = "graphics"
+priority = "optional"
+depends = "$auto"
+extended-description = "Fits photos onto a canvas with padding. Presets for the current Instagram formats, live preview and batch export."
+assets = [
+    ["target/release/passepartout", "usr/bin/", "755"],
+    ["data/io.github.untoastedtoast.Passepartout.desktop", "usr/share/applications/", "644"],
+    ["data/io.github.untoastedtoast.Passepartout.metainfo.xml", "usr/share/metainfo/", "644"],
+    ["data/icons/hicolor/scalable/apps/io.github.untoastedtoast.Passepartout.svg", "usr/share/icons/hicolor/scalable/apps/", "644"],
+]
+
+[package.metadata.generate-rpm]
+assets = [
+    { source = "target/release/passepartout", dest = "/usr/bin/passepartout", mode = "755" },
+    { source = "data/io.github.untoastedtoast.Passepartout.desktop", dest = "/usr/share/applications/io.github.untoastedtoast.Passepartout.desktop", mode = "644" },
+    { source = "data/io.github.untoastedtoast.Passepartout.metainfo.xml", dest = "/usr/share/metainfo/io.github.untoastedtoast.Passepartout.metainfo.xml", mode = "644" },
+    { source = "data/icons/hicolor/scalable/apps/io.github.untoastedtoast.Passepartout.svg", dest = "/usr/share/icons/hicolor/scalable/apps/io.github.untoastedtoast.Passepartout.svg", mode = "644" },
+]

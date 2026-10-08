@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.untoastedtoast.Passepartout</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>Apache-2.0</project_license>
+  <name>Passepartout</name>
+  <summary>Put images on a canvas, sized for Instagram</summary>
+  <developer id="io.github.untoastedtoast">
+    <name>UntoastedToast</name>
+  </developer>
+  <description>
+    <p>
+      Passepartout fits your photos onto a canvas with a frame around them. Pick a preset for current
+      Instagram formats, such as the 3:4 profile grid (1080 × 1440), set padding, background color and
+      output format, and export whole folders in one click.
+    </p>
+    <ul>
+      <li>Presets for profile grid, feed portrait, square, landscape and story or reel</li>
+      <li>Live preview, drag and drop, folders are added recursively</li>
+      <li>JPEG, PNG and WebP output, or keep the original format</li>
+    </ul>
+  </description>
+  <launchable type="desktop-id">io.github.untoastedtoast.Passepartout.desktop</launchable>
+  <url type="homepage">https://github.com/UntoastedToast/passepartout</url>
+  <categories>
+    <category>Graphics</category>
+  </categories>
+  <content_rating type="oars-1.1"/>
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+    <control>touch</control>
+  </supports>
+  <requires>
+    <display_length compare="ge">360</display_length>
+  </requires>
+  <releases>
+    <release version="0.1.0" date="2026-10-08"/>
+  </releases>
+</component>

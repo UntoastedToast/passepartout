@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    container: fedora:44
+    steps:
+      - run: dnf install -y cargo clippy rustfmt gcc pkgconf-pkg-config gtk4-devel libadwaita-devel appstream desktop-file-utils
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - run: cargo fmt --check
+      - run: cargo clippy --locked --all-targets -- -D warnings
+      - run: cargo test --locked
+      - run: desktop-file-validate data/*.desktop
+      - run: appstreamcli validate --no-net data/*.metainfo.xml
+      - if: github.ref_type == 'tag'
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          grep -qx "version = \"$version\"" Cargo.toml
+          grep -q "<release version=\"$version\"" data/*.metainfo.xml
+
+  flatpak:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-50
+      options: --privileged
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - run: flatpak/generate-sources.sh
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@79327416609af08178ad73b352877e51450790b3
+        with:
+          manifest-path: flatpak/io.github.untoastedtoast.Passepartout.yml
+          bundle: passepartout-x86_64.flatpak
+          artifact-name: package-flatpak
+          cache: false
+
+  deb:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - run: sudo apt-get update && sudo apt-get install -y libgtk-4-dev libadwaita-1-dev
+      - run: cargo install --locked --version 3.8.0 cargo-deb
+      - run: cargo deb --locked
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: package-deb
+          path: target/debian/*.deb
+
+  rpm:
+    runs-on: ubuntu-latest
+    container: fedora:44
+    steps:
+      - run: dnf install -y cargo gcc pkgconf-pkg-config gtk4-devel libadwaita-devel rpm-build
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - run: cargo install --locked --version 0.21.0 cargo-generate-rpm
+      - run: cargo build --release --locked
+      - run: cargo generate-rpm
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: package-rpm
+          path: target/generate-rpm/*.rpm
+
+  release:
+    if: github.ref_type == 'tag'
+    needs: [check, flatpak, deb, rpm]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        with:
+          pattern: package-*
+          merge-multiple: true
+          path: dist
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8
+        with:
+          subject-path: dist/*
+      - run: gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" --generate-notes --verify-tag
+        env:
+          GH_TOKEN: ${{ github.token }}

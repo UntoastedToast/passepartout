@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Passepartout
+Comment=Put images on a canvas, sized for Instagram
+Exec=passepartout %F
+Icon=io.github.untoastedtoast.Passepartout
+Terminal=false
+Categories=Graphics;Photography;GTK;
+MimeType=image/jpeg;image/png;image/webp;image/gif;image/bmp;image/tiff;
+Keywords=instagram;canvas;resize;padding;frame;
+StartupWMClass=io.github.untoastedtoast.Passepartout

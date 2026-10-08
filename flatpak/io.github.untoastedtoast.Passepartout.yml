@@ -1,0 +1,39 @@
+app-id: io.github.untoastedtoast.Passepartout
+runtime: org.gnome.Platform
+runtime-version: '50'
+sdk: org.gnome.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.rust-stable
+command: passepartout
+finish-args:
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  # default output folder ~/Pictures/Passepartout
+  - --filesystem=xdg-pictures
+build-options:
+  append-path: /usr/lib/sdk/rust-stable/bin
+  env:
+    CARGO_HOME: /run/build/passepartout/cargo
+modules:
+  - name: passepartout
+    buildsystem: simple
+    build-commands:
+      - cargo --offline fetch --manifest-path Cargo.toml --verbose
+      - cargo --offline build --release --verbose
+      - install -Dm755 target/release/passepartout -t /app/bin
+      - install -Dm644 data/io.github.untoastedtoast.Passepartout.desktop -t /app/share/applications
+      - install -Dm644 data/io.github.untoastedtoast.Passepartout.metainfo.xml -t /app/share/metainfo
+      - install -Dm644 data/icons/hicolor/scalable/apps/io.github.untoastedtoast.Passepartout.svg -t /app/share/icons/hicolor/scalable/apps
+    sources:
+      - type: dir
+        path: ..
+        skip:
+          - target
+          - build-dir
+          - .flatpak-builder
+          - flatpak_app
+          - repo
+          - .git
+      - cargo-sources.json
